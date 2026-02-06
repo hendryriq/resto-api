@@ -34,4 +34,52 @@ class Table extends Model
     {
         return $this->hasOne(Order::class)->where('status', 'open');
     }
+
+    /**
+     * Check if table is available
+     */
+    public function isAvailable(): bool
+    {
+        return $this->status === 'available' && !$this->currentOrder()->exists();
+    }
+
+    /**
+     * Open a new order on this table
+     */
+    public function openOrder(User $user): Order
+    {
+        if (!$this->isAvailable()) {
+            throw new \Exception('Table is not available');
+        }
+
+        \DB::beginTransaction();
+        try {
+            $order = $this->orders()->create([
+                'user_id' => $user->id,
+                'status' => 'open',
+                'total' => 0,
+            ]);
+
+            $this->update(['status' => 'occupied']);
+
+            \DB::commit();
+            return $order;
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Close the current order and mark table as available
+     */
+    public function closeCurrentOrder(): void
+    {
+        $currentOrder = $this->currentOrder;
+        
+        if ($currentOrder) {
+            $currentOrder->update(['status' => 'closed']);
+            $this->update(['status' => 'available']);
+        }
+    }
 }
