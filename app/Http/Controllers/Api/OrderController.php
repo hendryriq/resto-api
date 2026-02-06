@@ -65,4 +65,24 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Display the specified order
+     */
+    public function show($id)
+    {
+        $order = Order::with(['table', 'user', 'items.food'])->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => new OrderResource($order),
+        ], 200);
+    }
 }
