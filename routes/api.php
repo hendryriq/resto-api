@@ -21,4 +21,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Order routes
     Route::post('orders', [OrderController::class, 'store']);
     Route::get('orders/{id}', [OrderController::class, 'show']);
+    Route::post('orders/{id}/items', [OrderController::class, 'addItem']);
 });

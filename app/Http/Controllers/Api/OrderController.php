@@ -85,4 +85,55 @@ class OrderController extends Controller
             'data' => new OrderResource($order),
         ], 200);
     }
+
+    /**
+     * Add item to order
+     */
+    public function addItem(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'food_id' => 'required|exists:foods,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $order = Order::with(['table', 'user', 'items.food'])->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        if ($order->status !== 'open') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot add items to closed order',
+            ], 400);
+        }
+
+        $food = \App\Models\Food::find($request->food_id);
+        
+        $orderItem = $order->items()->create([
+            'food_id' => $request->food_id,
+            'quantity' => $request->quantity,
+            'price' => $food->price,
+        ]);
+
+        $order->load(['table', 'user', 'items.food']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item added to order successfully',
+            'data' => new OrderResource($order),
+        ], 201);
+    }
 }
