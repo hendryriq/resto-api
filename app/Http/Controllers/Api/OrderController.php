@@ -136,4 +136,50 @@ class OrderController extends Controller
             'data' => new OrderResource($order),
         ], 201);
     }
+
+    /**
+     * Close order
+     */
+    public function close($id)
+    {
+        $order = Order::with(['table', 'user', 'items.food'])->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        if ($order->status !== 'open') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order is already closed',
+            ], 400);
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            $order->update(['status' => 'closed']);
+
+            $order->table->update(['status' => 'available']);
+
+            \DB::commit();
+
+            $order->load(['table', 'user', 'items.food']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order closed successfully',
+                'data' => new OrderResource($order),
+            ], 200);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to close order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
