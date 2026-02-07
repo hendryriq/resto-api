@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\OrderController;
 
 // Public routes (no authentication required)
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('tables', [TableController::class, 'index']); // Tamu dapat melihat daftar meja
+Route::get('tables', [TableController::class, 'index']);
 
 // Protected routes (authentication required)
 Route::middleware('auth:sanctum')->group(function () {
@@ -24,4 +24,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('orders/{id}', [OrderController::class, 'show']);
     Route::post('orders/{id}/items', [OrderController::class, 'addItem']);
     Route::put('orders/{id}/close', [OrderController::class, 'close']);
+    Route::get('orders/{id}/receipt', [OrderController::class, 'generateReceipt']);
 });

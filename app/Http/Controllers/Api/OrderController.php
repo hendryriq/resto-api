@@ -8,6 +8,7 @@ use App\Models\Table;
 use App\Http\Resources\OrderResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
 {
@@ -214,5 +215,31 @@ class OrderController extends Controller
                 'message' => 'Failed to close order: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Generate PDF receipt for order
+     */
+    public function generateReceipt($id)
+    {
+        $order = Order::with(['table', 'user', 'items.food'])->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        if ($order->status !== 'closed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot generate receipt for open order',
+            ], 400);
+        }
+
+        $pdf = Pdf::loadView('receipts.order', ['order' => $order]);
+        
+        return $pdf->download('receipt-order-' . $order->id . '.pdf');
     }
 }
