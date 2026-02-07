@@ -12,6 +12,39 @@ use Illuminate\Support\Facades\Validator;
 class OrderController extends Controller
 {
     /**
+     * Display a listing of orders
+     */
+    public function index(Request $request)
+    {
+        $query = Order::with(['table', 'user', 'items.food']);
+
+        // Filter by status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by table_id
+        if ($request->has('table_id')) {
+            $query->where('table_id', $request->table_id);
+        }
+
+        // Filter by date
+        if ($request->has('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        // Order by newest first
+        $query->orderBy('created_at', 'desc');
+
+        $orders = $query->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => OrderResource::collection($orders),
+        ], 200);
+    }
+
+    /**
      * Store a newly created order (open new order)
      */
     public function store(Request $request)
