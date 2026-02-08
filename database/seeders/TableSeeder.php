@@ -11,8 +11,7 @@ class TableSeeder extends Seeder
     {
         $tables = [];
         
-        // Generate 10 tables
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 24; $i++) {
             $tables[] = [
                 'table_number' => $i,
                 'status' => 'available',
