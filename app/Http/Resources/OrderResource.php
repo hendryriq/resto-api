@@ -16,9 +16,11 @@ class OrderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'table_id' => $this->table_id,
             'table' => [
                 'id' => $this->table->id,
-                'table_number' => $this->table->table_number,
+                'table_number' => (string) $this->table->table_number,
+                'status' => $this->table->status,
             ],
             'user' => [
                 'id' => $this->user->id,

@@ -16,7 +16,7 @@ class TableResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'table_number' => $this->table_number,
+            'table_number' => (string) $this->table_number,
             'status' => $this->status,
             'current_order' => $this->when(
                 $this->relationLoaded('currentOrder'),

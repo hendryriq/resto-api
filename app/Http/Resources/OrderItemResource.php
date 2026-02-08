@@ -16,15 +16,11 @@ class OrderItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'food' => [
-                'id' => $this->food->id,
-                'name' => $this->food->name,
-            ],
+            'food_id' => $this->food_id,
+            'food' => new FoodResource($this->food),
             'quantity' => $this->quantity,
             'price' => (float) $this->price,
             'subtotal' => (float) $this->subtotal,
-            'created_at' => $this->created_at?->toDateTimeString(),
-            'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
     }
 }
