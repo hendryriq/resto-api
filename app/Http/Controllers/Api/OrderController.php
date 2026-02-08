@@ -242,4 +242,136 @@ class OrderController extends Controller
         
         return $pdf->download('receipt-order-' . $order->id . '.pdf');
     }
+
+    /**
+     * Update order item quantity
+     */
+    public function updateItem(Request $request, $orderId, $itemId)
+    {
+        $validator = Validator::make($request->all(), [
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $order = Order::with(['table', 'user', 'items.food'])->find($orderId);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        if ($order->status !== 'open') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot modify closed order',
+            ], 400);
+        }
+
+        $orderItem = $order->items()->find($itemId);
+
+        if (!$orderItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found in this order',
+            ], 404);
+        }
+
+        $orderItem->update([
+            'quantity' => $request->quantity,
+        ]);
+
+        $order->load(['table', 'user', 'items.food']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item quantity updated successfully',
+            'data' => new OrderResource($order),
+        ], 200);
+    }
+
+    /**
+     * Remove item from order
+     */
+    public function removeItem($orderId, $itemId)
+    {
+        $order = Order::with(['table', 'user', 'items.food'])->find($orderId);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        if ($order->status !== 'open') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot modify closed order',
+            ], 400);
+        }
+
+        $orderItem = $order->items()->find($itemId);
+
+        if (!$orderItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found in this order',
+            ], 404);
+        }
+
+        $orderItem->delete();
+
+        $order->load(['table', 'user', 'items.food']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item removed successfully',
+            'data' => new OrderResource($order),
+        ], 200);
+    }
+
+    /**
+     * Cancel/delete order
+     */
+    public function destroy($id)
+    {
+        $order = Order::with(['table'])->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            $order->table->update(['status' => 'available']);
+
+            $order->delete();
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
