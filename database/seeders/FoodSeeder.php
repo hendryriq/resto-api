@@ -69,15 +69,6 @@ class FoodSeeder extends Seeder
 
             // --- Main Course ---
             [
-                'name' => 'Grilled Salmon',
-                'description' => 'Fresh atlantic salmon served with asparagus and lemon butter',
-                'price' => 24.00,
-                'category' => 'Main Course',
-                'image_url' => 'https://images.unsplash.com/photo-1485921325833-c519f76c4974?q=80&w=800&auto=format&fit=crop',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
                 'name' => 'Ribeye Steak',
                 'description' => '10oz premium beef steak served with mashed potatoes',
                 'price' => 32.99,
@@ -168,15 +159,6 @@ class FoodSeeder extends Seeder
                 'price' => 4.50,
                 'category' => 'Beverages',
                 'image_url' => 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=800&auto=format&fit=crop',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Mineral Water',
-                'description' => 'Premium bottled still water',
-                'price' => 2.50,
-                'category' => 'Beverages',
-                'image_url' => 'https://images.unsplash.com/photo-1560614382-33353781c275?q=80&w=800&auto=format&fit=crop',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
