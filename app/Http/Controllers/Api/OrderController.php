@@ -121,6 +121,110 @@ class OrderController extends Controller
     }
 
     /**
+     * Save order as draft (pending status)
+     */
+    public function saveToDraft(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'table_id' => 'required|exists:tables,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Create order with pending status
+            $order = Order::create([
+                'table_id' => $request->table_id,
+                'user_id' => $request->user()->id,
+                'status' => 'pending',
+                'total' => 0,
+            ]);
+            
+            // Load relationships for response
+            $order->load(['table', 'user', 'items']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order saved to draft successfully',
+                'data' => new OrderResource($order),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save draft: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Activate pending order (convert to open)
+     */
+    public function activate($id)
+    {
+        $order = Order::with(['table', 'user', 'items.food'])->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending orders can be activated',
+            ], 400);
+        }
+
+        $table = $order->table;
+
+        if ($table->status !== 'available') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Table is not available',
+            ], 400);
+        }
+
+        if ($table->currentOrder()->where('id', '!=', $order->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Table already has an open order',
+            ], 400);
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            $order->update(['status' => 'open']);
+
+            $table->update(['status' => 'occupied']);
+
+            \DB::commit();
+
+            $order->load(['table', 'user', 'items.food']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order activated successfully',
+                'data' => new OrderResource($order),
+            ], 200);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to activate order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Add item to order
      */
     public function addItem(Request $request, $id)
@@ -147,7 +251,7 @@ class OrderController extends Controller
             ], 404);
         }
 
-        if ($order->status !== 'open') {
+        if (!in_array($order->status, ['pending', 'open'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot add items to closed order',
@@ -188,7 +292,7 @@ class OrderController extends Controller
         if ($order->status !== 'open') {
             return response()->json([
                 'success' => false,
-                'message' => 'Order is already closed',
+                'message' => 'Only open orders can be closed',
             ], 400);
         }
 
@@ -269,7 +373,7 @@ class OrderController extends Controller
             ], 404);
         }
 
-        if ($order->status !== 'open') {
+        if (!in_array($order->status, ['pending', 'open'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot modify closed order',
@@ -312,7 +416,7 @@ class OrderController extends Controller
             ], 404);
         }
 
-        if ($order->status !== 'open') {
+        if (!in_array($order->status, ['pending', 'open'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot modify closed order',

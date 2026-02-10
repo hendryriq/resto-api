@@ -21,10 +21,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Order routes
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
+    Route::post('orders/draft', [OrderController::class, 'saveToDraft']);
     Route::get('orders/{id}', [OrderController::class, 'show']);
     Route::post('orders/{id}/items', [OrderController::class, 'addItem']);
     Route::put('orders/{orderId}/items/{itemId}', [OrderController::class, 'updateItem']);
     Route::delete('orders/{orderId}/items/{itemId}', [OrderController::class, 'removeItem']);
+    Route::put('orders/{id}/activate', [OrderController::class, 'activate']);
     Route::put('orders/{id}/close', [OrderController::class, 'close']);
     Route::delete('orders/{id}', [OrderController::class, 'destroy']);
     Route::get('orders/{id}/receipt', [OrderController::class, 'generateReceipt']);
