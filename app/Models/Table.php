@@ -60,8 +60,6 @@ class Table extends Model
                 'total' => 0,
             ]);
 
-            $this->update(['status' => 'occupied']);
-
             \DB::commit();
             return $order;
         } catch (\Exception $e) {
